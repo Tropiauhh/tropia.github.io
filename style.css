@@ -1,0 +1,83 @@
+
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+        #hotbar { 
+            position: absolute; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            width: 600px; /* Aumentei a largura para acomodar mais blocos */
+            height: 40px;  
+            background: rgba(0, 0, 0, 0.5); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 10px; 
+            color: white; 
+        }
+        .block { 
+            width: 30px; 
+            height: 30px; 
+            margin: 0 5px; 
+            cursor: pointer; 
+            background-size: cover; 
+            border-radius: 5px;
+            position: relative; /* Para posicionar o círculo */
+        }
+        .active { 
+            box-shadow: 0 0 5px 2px yellow;
+        }
+        .remove-circle {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 10px;
+            height: 10px;
+            background-color: #FF7F7F; /* Vermelho pastel */
+            border-radius: 50%;
+            display: none; /* Inicialmente oculto */
+            cursor: pointer;
+        }
+        .active .remove-circle {
+            display: block; /* Mostrar apenas no bloco ativo */
+        }
+        #fpsCounter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 16px;
+        }
+        #importButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #imageUrlInput {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #resetButton {
+            position: absolute;
+            top: 90px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    

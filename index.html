@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+        #hotbar { 
+            position: absolute; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            width: 600px; /* Aumentei a largura para acomodar mais blocos */
+            height: 40px;  
+            background: rgba(0, 0, 0, 0.5); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 10px; 
+            color: white; 
+        }
+        .block { 
+            width: 30px; 
+            height: 30px; 
+            margin: 0 5px; 
+            cursor: pointer; 
+            background-size: cover; 
+            border-radius: 5px;
+            position: relative; /* Para posicionar o círculo */
+        }
+        .active { 
+            box-shadow: 0 0 5px 2px yellow;
+        }
+        .remove-circle {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 10px;
+            height: 10px;
+            background-color: #FF7F7F; /* Vermelho pastel */
+            border-radius: 50%;
+            display: none; /* Inicialmente oculto */
+            cursor: pointer;
+        }
+        .active .remove-circle {
+            display: block; /* Mostrar apenas no bloco ativo */
+        }
+        #fpsCounter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 16px;
+        }
+        #importButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #imageUrlInput {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #resetButton {
+            position: absolute;
+            top: 90px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="hotbar">
+        <!-- Blocos pré-definidos com círculo de remoção -->
+        <div id="dirt_block" class="block predefined" style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvJmdfF1rbNy8hPiV7Y4Zk8LQq2DVII6vvbA&amp;s');">
+            <div class="remove-circle"></div>
+        </div>
+        <div id="stone_block" class="block predefined" style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd76k-uLoF78Xp4IjyM7tmc4RQUrBGJWZSPw&amp;s');">
+            <div class="remove-circle"></div>
+        </div>
+        <div id="oak_planks" class="block predefined" style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoN2XoJP0wmkJDsZqp1IBfHkj4yMdMVPG7gw&amp;s');">
+            <div class="remove-circle"></div>
+        </div>
+        <div id="cobblestone_block" class="block predefined" style="background-image: url('https://i.imgur.com/HZMrXHD.png');">
+            <div class="remove-circle"></div>
+        </div>
+        <div id="bedrock_block" class="block predefined" style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBwT48d7CmJGTLMCt46zK_1SelJNSNfxnD6g&amp;s');">
+            <div class="remove-circle"></div>
+        </div>
+        <div id="grass_block" class="block predefined" style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRccgl4KdQYdl_qnuRZ_QRf2nlTNRIecmuTAA&amp;s');">
+            <div class="remove-circle"></div>
+        </div>
+        <div id="stone_bricks" class="block predefined" style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNYgiiGPDgznboNwk0QG1qGreCoJXCrbB4BVYDcGgH8kNRjennlhJrW0eywYsJ2m5RZw4&amp;usqp=CAU');">
+            <div class="remove-circle"></div>
+        </div>
+        <div id="sand" class="block predefined" style="background-image: url('https://www.fractalcamo.com/uploads/5/9/0/2/5902948/s189772745713394276_p3861_i148_w750.jpeg');">
+            <div class="remove-circle"></div>
+        </div>
+        <div id="cactus" class="block predefined" style="background-image: url('https://art.pixilart.com/22770ad7b63f.png');">
+            <div class="remove-circle"></div>
+        </div>
+    </div>
+    <div id="fpsCounter">FPS: 43</div>
+    <input type="text" id="imageUrlInput" placeholder="Enter image URL">
+    <button id="importButton">Import Cube</button>
+    <button id="resetButton">Reset Hotbar</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(7, 5, 7);
+        camera.lookAt(0, 0, 0);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        const textureLoader = new THREE.TextureLoader();
+        const blockTextures = {
+            dirt: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvJmdfF1rbNy8hPiV7Y4Zk8LQq2DVII6vvbA&s',
+            stone: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd76k-uLoF78Xp4IjyM7tmc4RQUrBGJWZSPw&s',
+            oak_planks: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoN2XoJP0wmkJDsZqp1IBfHkj4yMdMVPG7gw&s',
+            cobblestone: 'https://i.imgur.com/HZMrXHD.png',
+            bedrock: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBwT48d7CmJGTLMCt46zK_1SelJNSNfxnD6g&s',
+            grass: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRccgl4KdQYdl_qnuRZ_QRf2nlTNRIecmuTAA&s',
+            stone_bricks: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNYgiiGPDgznboNwk0QG1qGreCoJXCrbB4BVYDcGgH8kNRjennlhJrW0eywYsJ2m5RZw4&usqp=CAU',
+            sand: 'https://www.fractalcamo.com/uploads/5/9/0/2/5902948/s189772745713394276_p3861_i148_w750.jpeg',
+            cactus: 'https://art.pixilart.com/22770ad7b63f.png'
+        };
+
+        const materials = Object.keys(blockTextures).map((key, index) => {
+            const texture = textureLoader.load(blockTextures[key]);
+            return new THREE.MeshLambertMaterial({
+                map: texture,
+                emissive: new THREE.Color(1, 1, 1).multiplyScalar(0.1),
+                color: key === 'grass' ? new THREE.Color(0x87cd49) : undefined
+            });
+        });
+
+        const geometry = new THREE.BoxGeometry();
+
+        const groundSize = 12, cubeSize = 1, halfGroundSize = groundSize / 2;
+        for (let x = -halfGroundSize; x < halfGroundSize; x++) {
+            for (let z = -halfGroundSize; z < halfGroundSize; z++) {
+                const groundCube = new THREE.Mesh(geometry, materials[4]);
+                groundCube.position.set(x + cubeSize / 2, -cubeSize / 2, z + cubeSize / 2);
+                groundCube.castShadow = groundCube.receiveShadow = true;
+                scene.add(groundCube);
+            }
+        }
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth, height = window.innerHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        });
+
+        const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+        let selectedBlock = 0; 
+
+        function createCube(position, materialIndex) {
+            const newCube = new THREE.Mesh(geometry, materials[materialIndex]);
+            newCube.position.copy(position);
+            newCube.castShadow = newCube.receiveShadow = true;
+            scene.add(newCube);
+        }
+
+        window.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0) {
+                const normal = intersects[0].face.normal.clone().applyMatrix3(new THREE.Matrix3().getNormalMatrix(intersects[0].object.matrixWorld));
+                const newPosition = intersects[0].object.position.clone().add(normal);
+                createCube(newPosition, selectedBlock);
+            }
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.button === 0) {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(scene.children);
+                if (intersects.length > 0) scene.remove(intersects[0].object);
+            }
+        });
+
+        window.addEventListener('wheel', (event) => {
+            selectedBlock = (selectedBlock + (event.deltaY > 0 ? 1 : -1) + materials.length) % materials.length;
+            document.querySelectorAll('.block').forEach((block, index) => block.classList.toggle('active', index === selectedBlock));
+        });
+
+        const fpsCounter = document.getElementById('fpsCounter');
+        let lastTime = performance.now(), frameCount = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+            frameCount++;
+            const now = performance.now();
+            if (now - lastTime >= 1000) {
+                fpsCounter.textContent = `FPS: ${frameCount}`;
+                frameCount = 0;
+                lastTime = now;
+            }
+        }
+
+        animate();
+
+        // Função para adicionar um novo bloco à hotbar
+        function addBlockToHotbar(imageUrl) {
+            const hotbar = document.getElementById('hotbar');
+            if (hotbar.children.length >= 15) { // Limite aumentado para 15 blocos
+                alert('Hotbar limit reached (15 blocks max).');
+                return;
+            }
+
+            const newTexture = textureLoader.load(imageUrl, () => {
+                const newMaterial = new THREE.MeshLambertMaterial({ map: newTexture });
+                materials.push(newMaterial);
+
+                const newBlock = document.createElement('div');
+                newBlock.className = 'block';
+                newBlock.style.backgroundImage = `url('${imageUrl}')`;
+                newBlock.addEventListener('click', () => {
+                    selectedBlock = materials.length - 1;
+                    document.querySelectorAll('.block').forEach((block, index) => block.classList.toggle('active', index === selectedBlock));
+                });
+
+                // Adiciona o círculo de remoção
+                const removeCircle = document.createElement('div');
+                removeCircle.className = 'remove-circle';
+                removeCircle.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Evita que o clique no círculo selecione o bloco
+                    const blockIndex = Array.from(hotbar.children).indexOf(newBlock);
+                    if (blockIndex !== -1) {
+                        hotbar.removeChild(newBlock);
+                        materials.splice(blockIndex, 1);
+                        if (selectedBlock >= blockIndex) selectedBlock--;
+                        document.querySelectorAll('.block').forEach((block, index) => block.classList.toggle('active', index === selectedBlock));
+                    }
+                });
+
+                newBlock.appendChild(removeCircle);
+                hotbar.appendChild(newBlock);
+            });
+        }
+
+        // Botão de importação
+        document.getElementById('importButton').addEventListener('click', () => {
+            const imageUrl = document.getElementById('imageUrlInput').value;
+            if (imageUrl) {
+                addBlockToHotbar(imageUrl);
+            }
+        });
+
+        // Botão de reset
+        document.getElementById('resetButton').addEventListener('click', () => {
+            const hotbar = document.getElementById('hotbar');
+            // Remove todos os blocos adicionados
+            while (hotbar.children.length > 9) {
+                hotbar.removeChild(hotbar.lastChild);
+            }
+            // Remove materiais adicionados
+            materials.splice(9, materials.length - 9);
+            // Reseta o bloco selecionado
+            selectedBlock = 0;
+            document.querySelectorAll('.block').forEach((block, index) => block.classList.toggle('active', index === selectedBlock));
+        });
+
+        // Adiciona eventos de clique nos círculos de remoção dos blocos adicionados dinamicamente
+        document.querySelectorAll('.block .remove-circle').forEach((circle) => {
+            circle.addEventListener('click', (event) => {
+                event.stopPropagation(); // Evita que o clique no círculo selecione o bloco
+                const block = event.target.parentElement;
+                // Verifica se o bloco é pré-definido
+                if (block.classList.contains('predefined')) {
+                    alert('Cannot delete predefined blocks.');
+                    return;
+                }
+                const blockIndex = Array.from(block.parentElement.children).indexOf(block);
+                if (blockIndex !== -1) {
+                    block.parentElement.removeChild(block);
+                    materials.splice(blockIndex, 1);
+                    if (selectedBlock >= blockIndex) selectedBlock--;
+                    document.querySelectorAll('.block').forEach((block, index) => block.classList.toggle('active', index === selectedBlock));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
